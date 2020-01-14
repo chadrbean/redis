@@ -1,22 +1,29 @@
+import sys
+import csv
 import redis
-import json
 
-r = redis.Redis("localhost")
+r = redis.Redis("10.138.0.5")
 p = r.pipeline()
 counter = 1
 
-with open("/Users/chadbean/Documents/Programing/github/email\ validation/load.json") as f:
-    data = f.readlines()
-    
-    for record in data:
-        jrecord = json.loads(record)
-        for key, value in jrecord.items():
-            try:
-                if int(value) > 1:
-                    p.zincrby(jrecord['domain'], key, value)
-                  
-            # I wasnt sure a better way to skip values that couldnt be turned into an int from above code so I 
-            # just caught the error and skip        
-            except ValueError:
-                continue
-    p.execute()
+with open(sys.argv[1]) as f:
+    csvr = csv.reader(f)
+    for row in csvr:
+        row[0] = ''.join(row[0]).split()
+        title = row[0]
+        count = row[-1]
+        try:
+            count = int(count)
+        except:
+            continue
+        for i in row[0]:
+            p.zincrby("titles_split_2", count, i)
+        counter += 1
+#        if count % 1000:
+        if counter == 300000: 
+           print('executed')
+           print(count)
+           p.execute()
+           counter = 1
+
+p.execute()
