@@ -1,0 +1,32 @@
+import sys, pandas, traceback, subprocess
+
+import redis
+import sys
+import json
+
+
+data = pandas.read_csv(sys.argv[1], delimiter=",", names=['sourceName', 'extractorName'])
+s_list = [data['sourceName'],data['extractorName']]
+for i, row in data.iterrows():
+
+    source_file_name = row[0]+".json"
+    extractor_name = row[1].strip(".py").strip()
+    print(extractor_name)
+    print(source_file_name)
+    input()
+    r = redis.Redis(host="127.0.0.1", port="16379")
+    p = r.pipeline()
+    count = 0
+    with open(source_file_name) as f:
+        for line in f:
+            print(count)
+            j = json.loads(line)
+            if "emails" not in j:
+                continue
+            j["source"] = extractor_name
+            for e in j["emails"]:
+                p.sadd(e["address"].lower(), json.dumps(j))
+            count = count + 1
+            if count % 10000 == 0:
+                p.execute()
+    p.execute()
