@@ -2,7 +2,7 @@ import sys
 import csv
 import redis
 
-r = redis.Redis("10.138.0.5")
+r = redis.Redis("ip")
 p = r.pipeline()
 counter = 1
 
